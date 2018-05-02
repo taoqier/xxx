@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>weather</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.5.16/dist/vue.js"></script>
+    <script src="./js/jsonp.js"></script>
+    <script src="./js/iconfont.js"></script>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+        .icon {
+            width: 3em; height: 3em;
+            vertical-align: -0.15em;
+            fill: currentColor;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="header-6" id="weather"  v-cloak>
+
+        <div class="temperature">
+            <div>{{curtemper}}&#8451;</div>
+            <div>{{maxtemper}}&#176;/{{mintemper}}&#176;</div>
+        </div>
+        <div></div>
+        <div class="info-text">未来两日</div>
+        <div></div>
+        <div class="tomorrow">
+            <div class="weathicon">
+                <svg class="icon" aria-hidden="true">
+                    <use :xlink:href="`#icon-tianqitubiao_${tomorrow}`"></use>
+                </svg>
+            </div>
+            <div>{{tomaxtemper}}/{{tomintemper}}</div>
+        </div>
+        <div></div>
+        <div class="dayafter">
+            <div class="weathicon">
+                <svg class="icon" aria-hidden="true">
+                    <use :xlink:href="`#icon-tianqitubiao_${dayafter}`"></use>
+                </svg>
+            </div>
+            <div>{{aftermaxtemper}}/{{aftermintemper}}</div>
+        </div>
+        <div></div>
+
+    </div>
+    <script>
+        Vue.use(vueJsonp)
+        new Vue({
+            el: '#weather',
+            data () {
+                return {
+                    curtemper: 0,
+                    maxtemper: 0,
+                    mintemper: 0,
+                    tomintemper: 0,
+                    tomaxtemper: 0,
+                    aftermintemper: 0,
+                    aftermaxtemper: 0,
+                    tomorrow: '',
+                    dayafter: '',
+                }
+            },
+            created () {
+                let ApiRoot = 'https://query.yahooapis.com/v1/public/yql'
+                this.$jsonp(
+                    ApiRoot,
+                    {
+                        q: "select * from weather.forecast where woeid in (select woeid from geo.places(1) where text='shanghai') and u='c'",
+                        format: 'json',
+                        callback: 'callbackFunction',
+                    }
+                ).then(json => {
+                    this.callbackFunction(json)
+                }).catch(err => {
+                    console.log(err)
+                })
+            },
+            methods: {
+                callbackFunction (data) {
+                    let res = data.query.results.channel.item
+                    this.curtemper = res.condition.temp
+                    this.mintemper = res.forecast[0].low
+                    this.maxtemper = res.forecast[0].high
+                    this.tomintemper = res.forecast[1].low
+                    this.tomaxtemper = res.forecast[1].high
+                    this.tomorrow = this.transcode(res.forecast[1].code)
+                    this.dayafter = this.transcode(res.forecast[2].code)
+                    console.log(this.tomorrow)
+                    console.log(this.dayafter)
+                    this.aftermintemper = res.forecast[2].low
+                    this.aftermaxtemper = res.forecast[2].high
+                    with (this) {
+                        console.log(curtemper, mintemper, maxtemper, tomintemper, tomaxtemper, aftermintemper, aftermaxtemper)
+                    }
+                },
+                transcode (code) {
+                    console.log(code)
+                    switch (parseInt(code)) {
+                        // thunderstrom shower
+                        case 3:
+                        case 4:
+                        case 37:
+                        case 38:
+                        case 39:
+                        case 11:
+                        case 12:
+                        case 40:
+                        case 42:
+                        case 45:
+                        case 46:
+                        case 47:
+                            return 'leizhenyu'
+                            break
+                        
+                        // clear fair(night)
+                        case 31:
+                        case 33:
+                            return 'qingtianzhou'
+                            break
+                        // sunny fair(day)
+                        case 32:
+                        case 34:
+                            return 'qingtianbai1'
+                            break
+   
+                        case 17:
+                            return 'bingbao'
+                            break
+
+                        case 19:
+                            return 'yangsha'
+                            break
+
+                        case 23:
+                        case 24:
+                            return 'dafeng'
+                            break
+
+                        case 26:
+                        case 44:
+                            return 'duoyun'
+                            break
+
+                        case 27:
+                        case 29:
+                            return 'qingzhuanduoyunzhou'
+                            break
+
+                        case 28:
+                        case 30:
+                            return 'qingtianbai'
+                            break
+
+                        // fog
+                        case 20:
+                            return 'wu'
+                            break
+
+                        case 21:
+                            return 'wumai'
+                            break
+
+                        // smoky
+                        case 22:
+                            return 'wumai'
+                            break
+                        
+                        // mixed rain and snow
+                        case 5:
+                        case 6:
+                        case 7:
+                            return 'yujiaxue'
+                            break
+
+                        case 8:
+                        case 9:
+                        case 10:
+                            return 'xiaoyu'
+                            break
+                        
+                        case 41:
+                        case 43:
+                            return 'daxue'
+                            break
+
+                        case 13:
+                        case 14:
+                        case 15:
+                            return 'xiaoxue'
+                            break
+                        default:
+                            break
+                    }
+                }
+            }
+        })
+</script>
+
+</body>
+</html>
